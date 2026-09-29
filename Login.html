@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Agente Financeiro</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #f4f7fa;
+        }
+        .login {
+            width: 100%;
+            max-width: 420px;
+            margin: 20px;
+            background: white;
+            padding: 35px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.10);
+        }
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            color: #123b5d;
+        }
+        .subtitulo {
+            text-align: center;
+            color: #667781;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #123b5d;
+        }
+        input {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 18px;
+            border: 1px solid #ccd6de;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1769aa;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            border-radius: 8px;
+            background: #1769aa;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0e568e;
+        }
+        .erro {
+            background: #ffe8e8;
+            color: #a40000;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="login">
+    <h1>Agente Financeiro</h1>
+    <p class="subtitulo">
+        Acesso ao sistema de processamento de notas fiscais
+    </p>
+    <div id="erro" class="erro hidden">
+        Usuário ou senha inválidos.
+    </div>
+    <form method="POST" action="/login">
+        <label for="usuario">
+            Usuário
+        </label>
+        <input
+            type="text"
+            id="usuario"
+            name="usuario"
+            placeholder="Digite seu usuário"
+            required
+        >
+        <label for="senha">
+            Senha
+        </label>
+        <input
+            type="password"
+            id="senha"
+            name="senha"
+            placeholder="Digite sua senha"
+            required
+        >
+        <button type="submit">
+            ENTRAR
+        </button>
+    </form>
+</div>
+<script>
+    const parametros = new URLSearchParams(
+        window.location.search
+    );
+    if (parametros.get("erro") === "1") {
+        document
+            .getElementById("erro")
+            .classList.remove("hidden");
+    }
+</script>
+</body>
+</html>

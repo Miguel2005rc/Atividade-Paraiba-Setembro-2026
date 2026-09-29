@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processador de Notas Fiscais</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 40px auto;
+        }
+        .cabecalho {
+            background: #1f4e79;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .cabecalho h1 {
+            margin: 0 0 10px;
+        }
+        .cabecalho p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #1f4e79;
+        }
+        .upload-area {
+            border: 2px dashed #1f4e79;
+            padding: 35px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            margin: 15px 0;
+        }
+        button {
+            border: none;
+            background: #1f4e79;
+            color: white;
+            padding: 13px 25px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #163a5b;
+        }
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            background: #eef4f8;
+            margin-top: 20px;
+            display: none;
+        }
+        .erro {
+            background: #ffe5e5;
+            color: #a00000;
+            border-left: 5px solid #c00000;
+        }
+        .sucesso {
+            background: #e4f7e9;
+            color: #176b2c;
+            border-left: 5px solid #26963f;
+        }
+        .processando {
+            background: #fff4d6;
+            color: #795900;
+            border-left: 5px solid #e0a800;
+        }
+        .resultado {
+            display: none;
+        }
+        .campo {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f7f8fa;
+            border-radius: 7px;
+        }
+        .campo strong {
+            color: #1f4e79;
+        }
+        .produtos {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        .produto {
+            margin-bottom: 5px;
+        }
+        .json {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+        }
+        .logout {
+            float: right;
+            background: #c0392b;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .logout:hover {
+            background: #922b21;
+        }
+        .loading {
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .linha {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 700px) {
+            .linha {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="cabecalho">
+        <button class="logout" onclick="sair()">
+            Sair
+        </button>
+        <h1>Processador de Notas Fiscais</h1>
+        <p>
+            Sistema de processamento utilizando Agentes de IA
+        </p>
+    </div>
+    <div class="card">
+        <h2>Enviar Nota Fiscal</h2>
+        <div class="upload-area">
+            <p>
+                Selecione um arquivo PDF de nota fiscal
+            </p>
+            <input
+                type="file"
+                id="arquivo"
+                accept=".pdf,application/pdf"
+            >
+            <br>
+            <button
+                id="botaoProcessar"
+                onclick="processar()"
+            >
+                Processar PDF
+            </button>
+        </div>
+        <div
+            id="status"
+            class="status"
+        ></div>
+    </div>
+    <div
+        id="resultado"
+        class="resultado"
+    >
+        <div class="card">
+            <h2>Resultado da Extração</h2>
+            <div class="linha">
+                <div class="campo">
+                    <strong>Razão Social:</strong>
+                    <div id="razaoSocial">
+                        -
+                    </div>
+                </div>
+                <div class="campo">
+                    <strong>Nome Fantasia:</strong>
+                    <div id="fantasia">
+                        -
+                    </div>
+                </div>
+            </div>
+            <div class="linha">
+                <div class="campo">
+                    <strong>CNPJ:</strong>
+                    <div id="cnpj">
+                    
+                    </div>
+                </div>
+                <div class="campo">
+                    <strong>Faturado:</strong>
+                    <div id="faturado">
+                        
+                    </div>
+                </div>
+
+            </div>
+            <div class="linha">
+                <div class="campo">
+                    <strong>CPF:</strong>
+                    <div id="cpf">
+                    </div>
+                </div>
+                <div class="campo">
+                    <strong>Número da Nota:</strong>
+                    <div id="numeroNota">
+                    </div>
+                </div>
+            </div>
+            <div class="linha">
+                <div class="campo">
+                    <strong>Data de Emissão:</strong>
+                    <div id="dataEmissao">
+                    </div>
+                </div>
+                <div class="campo">
+                    <strong>Quantidade de Parcelas:</strong>
+                    <div id="quantidadeParcelas">
+                    </div>
+                </div>
+            </div>
+            <div class="linha">
+                <div class="campo">
+                    <strong>Valor Total:</strong>
+                    <div id="valorTotal">
+                        -
+                    </div>
+                </div>
+                <div class="campo">
+                    <strong>Classificação da Despesa:</strong>
+                    <div id="tipoDespesa">
+                        -
+                    </div>
+                </div>
+            </div>
+            <div class="campo">
+                <strong>Produtos:</strong>
+                <div
+                    id="produtos"
+                    class="produtos"
+                >
+                    -
+                </div>
+            </div>
+            <div class="campo">
+                <strong>Parcelas:</strong>
+
+                <div
+                    id="parcelas"
+                    class="produtos"
+                >
+                    -
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>JSON Gerado</h2>
+            <pre
+                id="jsonResultado"
+                class="json"
+            ></pre>
+        </div>
+    </div>
+</div>
+<script>
+let trabalhoId = null;
+
+async function processar() {
+    const arquivoInput = document.getElementById("arquivo");
+    const botao = document.getElementById("botaoProcessar");
+    limparResultado();
+    if (!arquivoInput.files || arquivoInput.files.length === 0) {
+        mostrarErro(
+            "Selecione um arquivo PDF antes de processar."
+        );
+        return;
+    }
+    const arquivo = arquivoInput.files[0];
+    if (!arquivo.name.toLowerCase().endsWith(".pdf")) {
+        mostrarErro(
+            "O arquivo precisa estar no formato PDF."
+        );
+        return;
+    }
+    const formulario = new FormData();
+    formulario.append(
+        "arquivo",
+        arquivo
+    );
+    botao.disabled = true;
+    botao.textContent = "Enviando...";
+    mostrarProcessando(
+        "Enviando PDF para o servidor..."
+    );
+    try {
+        const resposta = await fetch(
+            "/api/extrair",
+            {
+                method: "POST",
+                body: formulario
+            }
+        );
+        const texto = await resposta.text();
+        console.log(
+            "STATUS HTTP:",
+            resposta.status
+        );
+        console.log(
+            "RESPOSTA DO SERVIDOR:",
+            texto
+        );
+        if (!texto) {
+            throw new Error(
+                "O servidor não retornou nenhuma resposta. HTTP " +
+                resposta.status
+            );
+        }
+        let dados;
+        try {
+            dados = JSON.parse(texto);
+        } catch (erroJson) {
+            console.error(
+                "Resposta que não é JSON:",
+                texto
+            );
+            throw new Error(
+                "O servidor retornou uma resposta inválida. " +
+                "HTTP " +
+                resposta.status +
+                ". Verifique o terminal do FastAPI."
+            );
+        }
+        if (!resposta.ok) {
+            throw new Error(
+                dados.detail ||
+                dados.mensagem ||
+                dados.message ||
+                "Erro no servidor. HTTP " +
+                resposta.status
+            );
+        }
+        trabalhoId =
+            dados.trabalho_id ||
+            dados.job_id ||
+            dados.id;
+        if (!trabalhoId) {
+            throw new Error(
+                "O servidor não retornou o ID do trabalho."
+            );
+        }
+        mostrarProcessando(
+            "PDF recebido. Iniciando os agentes de IA..."
+        );
+        acompanhar(
+            trabalhoId
+        );
+    } catch (erro) {
+        console.error(
+            "Erro:",
+            erro
+        );
+        mostrarErro(
+            erro.message ||
+            "Erro desconhecido ao processar o PDF."
+        );
+        botao.disabled = false;
+        botao.textContent =
+            "Processar PDF";
+    }
+}
+async function acompanhar(id) {
+    try {
+        const resposta = await fetch(
+            "/api/status/" +
+            encodeURIComponent(id)
+        );
+        const texto =
+            await resposta.text();
+        console.log(
+            "STATUS DO TRABALHO:",
+            texto
+        );
+        if (!texto) {
+            throw new Error(
+                "O servidor não retornou o status do trabalho."
+           );
+        }
+        let trabalho;
+        try {
+            trabalho =
+                JSON.parse(texto);
+        } catch (erro) {
+            throw new Error(
+                "O servidor retornou um status inválido."
+            );
+        }
+        if (!resposta.ok) {
+            throw new Error(
+                trabalho.detail ||
+                trabalho.mensagem ||
+                trabalho.message ||
+                "Erro ao consultar o trabalho."
+            );
+        }
+        const status =
+            trabalho.status;
+        const mensagem =
+            trabalho.mensagem ||
+            trabalho.message ||
+            "Processando...";
+        console.log(
+            "STATUS:",
+            status
+        );
+        console.log(
+            "MENSAGEM:",
+            mensagem
+        );
+        if (
+            status === "aguardando" ||
+            status === "pending"
+        ) {
+            mostrarProcessando(
+                mensagem
+            );
+            setTimeout(
+                function () {
+                    acompanhar(id);
+                },
+                1000
+            );
+            return;
+        }
+        if (
+            status === "processando" ||
+            status === "processing"
+        ) {
+            mostrarProcessando(
+                mensagem
+            );
+            setTimeout(
+                function () {
+                    acompanhar(id);
+                },
+                1000
+            );
+            return;
+        }
+        if (
+            status === "concluido" ||
+            status === "concluído" ||
+            status === "completed"
+        ) {
+            mostrarSucesso(
+                "Processamento concluído com sucesso!"
+            );
+            const resultado =
+                trabalho.resultado ||
+                trabalho.result ||
+                trabalho.dados;
+            if (!resultado) {
+                mostrarErro(
+                    "O trabalho terminou, mas não retornou os dados."
+                );
+                liberarBotao();
+                return;
+            }
+            mostrarResultado(
+                resultado
+            );
+            liberarBotao();
+            return;
+        }
+        if (
+            status === "erro" ||
+            status === "error" ||
+            status === "failed"
+        ) {
+            const mensagemErro =
+                trabalho.mensagem ||
+                trabalho.message ||
+                trabalho.erro ||
+                trabalho.error ||
+                "Erro durante o processamento.";
+            mostrarErro(
+                mensagemErro
+            );
+            liberarBotao();
+            return;
+        }
+        mostrarProcessando(
+            "Status: " +
+            status
+        );
+        setTimeout(
+            function () {
+                acompanhar(id);
+            },
+            1000
+        );
+    } catch (erro) {
+        console.error(
+            "Erro ao acompanhar:",
+            erro
+        );
+        mostrarErro(
+            erro.message ||
+            "Erro ao consultar o processamento."
+        );
+        liberarBotao();
+    }
+}
+function mostrarResultado(dados) {
+    document.getElementById(
+        "resultado"
+    ).style.display = "block";
+    const fornecedor =
+        dados.fornecedor || {};
+    const faturado =
+        dados.faturado || {};
+    document.getElementById(
+        "razaoSocial"
+    ).textContent =
+        fornecedor.razao_social ||
+        "-";
+    document.getElementById(
+        "fantasia"
+    ).textContent =
+        fornecedor.fantasia ||
+        "-";
+    document.getElementById(
+        "cnpj"
+    ).textContent =
+        fornecedor.cnpj ||
+        "-";
+    document.getElementById(
+        "faturado"
+    ).textContent =
+        faturado.nome_completo ||
+        "-";
+    document.getElementById(
+        "cpf"
+    ).textContent =
+        faturado.cpf ||
+        "-";
+    document.getElementById(
+        "numeroNota"
+    ).textContent =
+        dados.numero_nota_fiscal ||
+        "-";
+    document.getElementById(
+        "dataEmissao"
+    ).textContent =
+        dados.data_emissao ||
+        "-";
+    document.getElementById(
+        "quantidadeParcelas"
+    ).textContent =
+        dados.quantidade_parcelas ??
+        "-";
+    document.getElementById(
+        "valorTotal"
+    ).textContent =
+        dados.valor_total ??
+        "-";
+    const tiposDespesa =
+        dados.tipo_despesa ||
+        dados.classificacao_despesa ||
+        [];
+    const elementoDespesa =
+        document.getElementById(
+            "tipoDespesa"
+        );
+    if (Array.isArray(tiposDespesa)) {
+        if (tiposDespesa.length > 0) {
+            elementoDespesa.textContent =
+                tiposDespesa.join(", ");
+        } else {
+            elementoDespesa.textContent =
+                "-";
+        }
+    } else {
+        elementoDespesa.textContent =
+            tiposDespesa ||
+            "-";
+    }
+    const produtos =
+        dados.descricao_produtos ||
+        dados.produtos ||
+        [];
+    const elementoProdutos =
+        document.getElementById(
+            "produtos"
+        );
+    elementoProdutos.innerHTML = "";
+    if (Array.isArray(produtos)) {
+        if (produtos.length === 0) {
+            elementoProdutos.textContent =
+                "-";
+        } else {
+            produtos.forEach(
+                function(produto) {
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+                    div.className =
+                        "produto";
+                    div.textContent =
+                        "• " +
+                        produto;
+                    elementoProdutos.appendChild(
+                        div
+                    );
+                }
+            );
+        }
+    } else {
+        elementoProdutos.textContent =
+            produtos ||
+            "-";
+    }
+    const parcelas =
+        dados.parcelas ||
+        [];
+    const elementoParcelas =
+        document.getElementById(
+            "parcelas"
+        );
+    elementoParcelas.innerHTML = "";
+    if (Array.isArray(parcelas)) {
+        if (parcelas.length === 0) {
+            elementoParcelas.textContent =
+                "-";
+        } else {
+            parcelas.forEach(
+                function(parcela) {
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+                    div.className =
+                        "produto";
+                    const numero =
+                        parcela.numero ??
+                        "-";
+                    const vencimento =
+                        parcela.data_vencimento ??
+                        "-";
+                    const valor =
+                        parcela.valor ??
+                        "-";
+                    div.textContent =
+                        "Parcela " +
+                        numero +
+                        " | Vencimento: " +
+                        vencimento +
+                        " | Valor: " +
+                        valor;
+                    elementoParcelas.appendChild(
+                        div
+                    );
+                }
+            );
+        }
+    } else {
+        elementoParcelas.textContent =
+            "-";
+    }
+    document.getElementById(
+        "jsonResultado"
+    ).textContent =
+        JSON.stringify(
+            dados,
+            null,
+            4
+        );
+}
+function mostrarProcessando(mensagem) {
+    const status =
+        document.getElementById(
+            "status"
+        );
+    status.style.display =
+        "block";
+    status.className =
+        "status processando";
+    status.innerHTML =
+        '<span class="loading">⏳</span>' +
+        escaparHTML(mensagem);
+}
+function mostrarSucesso(mensagem) {
+    const status =
+        document.getElementById(
+            "status"
+        );
+    status.style.display =
+        "block";
+    status.className =
+        "status sucesso";
+    status.textContent =
+        "✓ " +
+        mensagem;
+}
+function mostrarErro(mensagem) {
+    const status =
+        document.getElementById(
+            "status"
+        );
+    status.style.display =
+        "block";
+    status.className =
+        "status erro";
+    status.textContent =
+        "✗ " +
+        mensagem;
+}
+function limparResultado() {
+    document.getElementById(
+        "resultado"
+    ).style.display =
+        "none";
+    document.getElementById(
+        "status"
+    ).style.display =
+        "none";
+}
+function liberarBotao() {
+    const botao =
+        document.getElementById(
+            "botaoProcessar"
+        );
+    botao.disabled =
+        false;
+    botao.textContent =
+        "Processar PDF";
+
+}
+function escaparHTML(texto) {
+    const div =
+        document.createElement(
+            "div"
+        );
+    div.textContent =
+        texto;
+    return div.innerHTML;
+
+}
+function sair() {
+    window.location.href =
+        "/logout";
+}
+</script>
+</body>
+</html>
